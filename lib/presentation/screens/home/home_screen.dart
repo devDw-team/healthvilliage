@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
@@ -282,7 +283,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: AppStrings.hospital,
                 color: AppColors.hospital,
                 onTap: () {
-                  // TODO: 병원 검색으로 이동
+                  context.push('/hospital');
                 },
               ),
             ),
@@ -293,7 +294,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: AppStrings.pharmacy,
                 color: AppColors.pharmacy,
                 onTap: () {
-                  // TODO: 약국 검색으로 이동
+                  context.push('/pharmacy');
                 },
               ),
             ),

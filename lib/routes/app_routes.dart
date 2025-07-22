@@ -7,8 +7,10 @@ import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/signup_screen.dart';
 import '../presentation/screens/calendar/calendar_screen.dart';
 import '../presentation/screens/home/home_screen.dart';
+import '../presentation/screens/hospital/hospital_search_screen.dart';
 import '../presentation/screens/medicine/medicine_search_screen.dart';
 import '../presentation/screens/mypage/mypage_screen.dart';
+import '../presentation/screens/pharmacy/pharmacy_search_screen.dart';
 import '../presentation/screens/prescription/prescription_screen.dart';
 import '../presentation/screens/roulette/roulette_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
@@ -79,8 +81,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
+        path: '/hospital',
+        builder: (context, state) => const HospitalSearchScreen(),
+      ),
+      GoRoute(
         path: '/medicine',
         builder: (context, state) => const MedicineSearchScreen(),
+      ),
+      GoRoute(
+        path: '/pharmacy',
+        builder: (context, state) => const PharmacySearchScreen(),
       ),
       GoRoute(
         path: '/roulette',

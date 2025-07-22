@@ -22,6 +22,17 @@ PharmacyModel _$PharmacyModelFromJson(Map<String, dynamic> json) =>
       imageUrl: json['imageUrl'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      ykiho: json['ykiho'] as String?,
+      clCd: json['clCd'] as String?,
+      clCdNm: json['clCdNm'] as String?,
+      sidoCd: json['sidoCd'] as String?,
+      sidoCdNm: json['sidoCdNm'] as String?,
+      sgguCd: json['sgguCd'] as String?,
+      sgguCdNm: json['sgguCdNm'] as String?,
+      emdongNm: json['emdongNm'] as String?,
+      postNo: json['postNo'] as String?,
+      estbDd: json['estbDd'] as String?,
+      distance: (json['distance'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$PharmacyModelToJson(PharmacyModel instance) =>
@@ -40,4 +51,15 @@ Map<String, dynamic> _$PharmacyModelToJson(PharmacyModel instance) =>
       'imageUrl': instance.imageUrl,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
+      'ykiho': instance.ykiho,
+      'clCd': instance.clCd,
+      'clCdNm': instance.clCdNm,
+      'sidoCd': instance.sidoCd,
+      'sidoCdNm': instance.sidoCdNm,
+      'sgguCd': instance.sgguCd,
+      'sgguCdNm': instance.sgguCdNm,
+      'emdongNm': instance.emdongNm,
+      'postNo': instance.postNo,
+      'estbDd': instance.estbDd,
+      'distance': instance.distance,
     };
