@@ -6,6 +6,7 @@ import '../presentation/providers/auth_provider.dart';
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/signup_screen.dart';
 import '../presentation/screens/calendar/calendar_screen.dart';
+import '../presentation/screens/emergency/emergency_screen.dart';
 import '../presentation/screens/home/home_screen.dart';
 import '../presentation/screens/hospital/hospital_search_screen.dart';
 import '../presentation/screens/medicine/medicine_search_screen.dart';
@@ -14,6 +15,8 @@ import '../presentation/screens/pharmacy/pharmacy_search_screen.dart';
 import '../presentation/screens/prescription/prescription_screen.dart';
 import '../presentation/screens/roulette/roulette_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
+import '../presentation/screens/map/map_screen.dart';
+import '../data/models/hospital_marker.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -93,6 +96,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PharmacySearchScreen(),
       ),
       GoRoute(
+        path: '/emergency',
+        builder: (context, state) => const EmergencyScreen(),
+      ),
+      GoRoute(
         path: '/roulette',
         builder: (context, state) => const RouletteScreen(),
       ),
@@ -107,6 +114,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/prescription',
         builder: (context, state) => const PrescriptionScreen(),
+      ),
+      GoRoute(
+        path: '/map',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return MapScreen(
+            initialMarker: extra?['initialMarker'] as HospitalMarker?,
+            markerType: extra?['markerType'] as String?,
+          );
+        },
       ),
     ],
   );

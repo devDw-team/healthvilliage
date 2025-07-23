@@ -305,7 +305,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: AppStrings.emergencyRoom,
                 color: AppColors.emergency,
                 onTap: () {
-                  // TODO: 응급실 검색으로 이동
+                  context.push('/emergency');
                 },
               ),
             ),

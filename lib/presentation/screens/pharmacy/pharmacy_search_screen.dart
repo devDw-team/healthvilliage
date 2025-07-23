@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../data/models/pharmacy_model.dart';
+import '../../../data/models/hospital_marker.dart';
 import '../../providers/pharmacy_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
 
@@ -592,14 +594,23 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
                                       Icons.directions,
                                       color: AppColors.primary,
                                     ),
-                                    onPressed: () async {
-                                      final mapUrl = 'https://map.naver.com/search/${Uri.encodeComponent(pharmacy.address)}';
-                                      if (await canLaunchUrl(Uri.parse(mapUrl))) {
-                                        await launchUrl(
-                                          Uri.parse(mapUrl),
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      }
+                                    onPressed: () {
+                                      // 약국 정보를 HospitalMarker로 변환
+                                      final marker = HospitalMarker(
+                                        id: pharmacy.id,
+                                        name: pharmacy.name,
+                                        latitude: pharmacy.latitude,
+                                        longitude: pharmacy.longitude,
+                                        address: pharmacy.address,
+                                        phoneNumber: pharmacy.phone ?? '',
+                                        type: 'pharmacy',
+                                      );
+                                      
+                                                                             // 맵 화면으로 이동 (extra로 마커 정보 전달)
+                                      context.push('/map', extra: {
+                                        'initialMarker': marker,
+                                        'markerType': 'pharmacy',
+                                      });
                                     },
                                   ),
                                 ],

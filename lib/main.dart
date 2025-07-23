@@ -1,11 +1,14 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import 'app.dart';
 import 'core/services/supabase_service.dart';
+
 
 /// 앱의 진입점
 void main() async {
@@ -44,6 +47,13 @@ void main() async {
     
     // Supabase 초기화
     await SupabaseService.instance.initialize();
+    
+    // WebView 플랫폼별 초기화
+    if (Platform.isAndroid) {
+      WebViewPlatform.instance;
+    }
+    
+    // 카카오맵 초기화 (kakao_map_plugin은 자동으로 키를 처리함)
     
     // 앱 실행
     runApp(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../data/models/hospital_model.dart';
+import '../../../data/models/hospital_marker.dart';
 import '../../providers/hospital_provider.dart';
 import '../../providers/pharmacy_provider.dart'; // 시도/시군구 목록 재사용
 
@@ -672,14 +674,23 @@ class _HospitalSearchScreenState extends ConsumerState<HospitalSearchScreen> {
                                       Icons.directions,
                                       color: AppColors.primary,
                                     ),
-                                    onPressed: () async {
-                                      final mapUrl = 'https://map.naver.com/search/${Uri.encodeComponent(hospital.address)}';
-                                      if (await canLaunchUrl(Uri.parse(mapUrl))) {
-                                        await launchUrl(
-                                          Uri.parse(mapUrl),
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      }
+                                    onPressed: () {
+                                      // 병원 정보를 HospitalMarker로 변환
+                                      final marker = HospitalMarker(
+                                        id: hospital.id,
+                                        name: hospital.name,
+                                        latitude: hospital.latitude,
+                                        longitude: hospital.longitude,
+                                        address: hospital.address,
+                                        phoneNumber: hospital.phone ?? '',
+                                        type: 'hospital',
+                                      );
+                                      
+                                      // 맵 화면으로 이동 (extra로 마커 정보 전달)
+                                      context.push('/map', extra: {
+                                        'initialMarker': marker,
+                                        'markerType': 'hospital',
+                                      });
                                     },
                                   ),
                                 ],

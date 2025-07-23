@@ -45,5 +45,33 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+    <array>
+       <string>tel</string>
+       <string>http</string>
+       <string>https</string>
+       <string>kakaomap</string>
+    </array>
+    
+    <!-- WebView 사용 설정 -->
+    <key>io.flutter.embedded_views_preview</key>
+    <true/>
+    
+    <!-- HTTP 통신 허용 (카카오맵 API) -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsArbitraryLoadsInWebContent</key>
+        <true/>
+    </dict>
+    
+    <!-- 위치 권한 설명 -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>주변 병원 및 약국을 찾기 위해 현재 위치가 필요합니다.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>백그라운드에서도 위치 기반 서비스를 제공하기 위해 필요합니다.</string>
 </dict>
 </plist>
