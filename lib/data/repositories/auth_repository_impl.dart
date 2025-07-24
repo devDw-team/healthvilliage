@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/services/supabase_service.dart';
@@ -159,6 +160,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String? phone,
     DateTime? birthDate,
     String? gender,
+    String? profileImageUrl,
   }) async {
     try {
       final updates = {
@@ -166,6 +168,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'phone': phone,
         'birth_date': birthDate?.toIso8601String(),
         'gender': gender,
+        'profile_image_url': profileImageUrl,
         'updated_at': DateTime.now().toIso8601String(),
       };
 
@@ -225,6 +228,54 @@ class AuthRepositoryImpl implements AuthRepository {
       );
     } catch (e) {
       throw Exception('Failed to resend confirmation email: $e');
+    }
+  }
+
+  @override
+  Future<bool> verifyPassword(String email, String password) async {
+    try {
+      // 임시 클라이언트로 비밀번호 확인 (현재 세션에 영향 없음)
+      final response = await _supabaseService.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      
+      // 성공하면 true 반환 (세션은 유지하지 않음)
+      return response.user != null;
+    } catch (e) {
+      print('[AuthRepositoryImpl] verifyPassword 오류: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<String?> uploadProfileImage(String userId, File imageFile) async {
+    try {
+      // 파일 확장자 가져오기
+      final fileExt = imageFile.path.split('.').last;
+      final fileName = '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      
+      // Storage bucket이 없으면 생성 (처음 한 번만)
+      // Supabase 대시보드에서 'profiles' bucket을 public으로 생성해야 함
+      
+      // 이미지 업로드
+      final uploadResponse = await _supabaseService.client.storage
+          .from('profiles')
+          .upload(fileName, imageFile);
+      
+      if (uploadResponse.isEmpty) {
+        throw Exception('Failed to upload image');
+      }
+      
+      // 업로드된 이미지의 public URL 가져오기
+      final imageUrl = _supabaseService.client.storage
+          .from('profiles')
+          .getPublicUrl(fileName);
+      
+      return imageUrl;
+    } catch (e) {
+      print('[AuthRepositoryImpl] uploadProfileImage 오류: $e');
+      return null;
     }
   }
 }

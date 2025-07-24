@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../providers/auth_provider.dart';
+import '../mypage/mypage_screen.dart';
 
 /// 홈 화면 - 메인 네비게이션과 주요 기능들
 class HomeScreen extends ConsumerStatefulWidget {
@@ -23,7 +24,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     const MedicineTabScreen(),
     const RouletteTabScreen(),
     const CalendarTabScreen(),
-    const MyPageTabScreen(),
+    const MyPageScreen(),
   ];
 
   @override
@@ -199,17 +200,45 @@ class WelcomeSection extends ConsumerWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 32,
-                ),
+              Consumer(
+                builder: (context, ref, child) {
+                  final userAsync = ref.watch(authStateProvider);
+                  final profileImageUrl = userAsync.whenOrNull(
+                    data: (user) => user?.profileImageUrl,
+                  );
+                  
+                  return Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.5),
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: profileImageUrl != null
+                          ? Image.network(
+                              profileImageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 32,
+                                );
+                              },
+                            )
+                          : Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -522,19 +551,4 @@ class CalendarTabScreen extends StatelessWidget {
   }
 }
 
-/// 마이페이지 탭 화면 (임시)
-class MyPageTabScreen extends StatelessWidget {
-  const MyPageTabScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.myPage),
-      ),
-      body: const Center(
-        child: Text('마이페이지 화면\n(개발 예정)'),
-      ),
-    );
-  }
-} 
+ 

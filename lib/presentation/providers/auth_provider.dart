@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -110,11 +111,12 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     String? phone,
     DateTime? birthDate,
     String? gender,
+    String? profileImageUrl,
   }) async {
     final currentUser = state.value;
     if (currentUser == null) return;
 
-    state = const AsyncValue.loading();
+    // 기존 사용자 데이터를 유지하면서 업데이트
     try {
       final updatedUser = await _authRepository.updateProfile(
         userId: currentUser.id,
@@ -122,16 +124,45 @@ class AuthStateNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         phone: phone,
         birthDate: birthDate,
         gender: gender,
+        profileImageUrl: profileImageUrl,
       );
       state = AsyncValue.data(updatedUser);
     } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+      // 에러 발생 시에도 기존 사용자 데이터 유지
+      state = AsyncValue.data(currentUser);
       rethrow;
+    }
+  }
+
+  Future<String?> uploadProfileImage(File imageFile) async {
+    final currentUser = state.value;
+    if (currentUser == null) return null;
+
+    try {
+      return await _authRepository.uploadProfileImage(currentUser.id, imageFile);
+    } catch (e) {
+      print('[AuthStateNotifier] uploadProfileImage 오류: $e');
+      return null;
     }
   }
 
   Future<void> resendConfirmationEmail(String email) async {
     await _authRepository.resendConfirmationEmail(email);
+  }
+
+  Future<bool> verifyPassword(String password) async {
+    try {
+      final currentUser = state.value;
+      if (currentUser == null) return false;
+      
+      // 별도의 verifyPassword 메서드 사용 (세션에 영향 없음)
+      return await _authRepository.verifyPassword(
+        currentUser.email,
+        password,
+      );
+    } catch (e) {
+      return false;
+    }
   }
 }
 

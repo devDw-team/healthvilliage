@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../../domain/entities/user_entity.dart';
 
 part 'user_model.g.dart';
 
@@ -64,6 +65,38 @@ class UserModel {
       level: level ?? this.level,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  UserEntity toEntity() {
+    return UserEntity(
+      id: id,
+      email: email,
+      name: name,
+      phone: phone,
+      profileImageUrl: profileImageUrl,
+      birthDate: birthDate,
+      gender: gender,
+      points: points,
+      level: level,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+
+  factory UserModel.fromEntity(UserEntity entity) {
+    return UserModel(
+      id: entity.id,
+      email: entity.email,
+      name: entity.name,
+      phone: entity.phone,
+      profileImageUrl: entity.profileImageUrl,
+      birthDate: entity.birthDate,
+      gender: entity.gender,
+      points: entity.points,
+      level: entity.level,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
     );
   }
 }

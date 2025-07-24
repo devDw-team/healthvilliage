@@ -13,27 +13,37 @@ import '../presentation/screens/medicine/medicine_search_screen.dart';
 import '../presentation/screens/mypage/mypage_screen.dart';
 import '../presentation/screens/pharmacy/pharmacy_search_screen.dart';
 import '../presentation/screens/prescription/prescription_screen.dart';
+import '../presentation/screens/profile/profile_edit_screen.dart';
 import '../presentation/screens/roulette/roulette_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/map/map_screen.dart';
 import '../data/models/hospital_marker.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-
+  // 초기 상태 저장
+  bool isInitialized = false;
+  
   return GoRouter(
     initialLocation: '/splash',
     refreshListenable: _RouterNotifier(ref),
     redirect: (context, state) {
       print('[AppRouter] redirect 호출됨');
       print('[AppRouter] 현재 경로: ${state.matchedLocation}');
-      print('[AppRouter] Auth 상태: $authState');
+      
+      // 초기화가 완료되고 프로필 편집 페이지인 경우 리다이렉트 하지 않음
+      if (isInitialized && state.matchedLocation == '/profile/edit') {
+        print('[AppRouter] 프로필 편집 페이지, 리다이렉트 스킵');
+        return null;
+      }
       
       // If we're on splash screen, don't redirect
       if (state.matchedLocation == '/splash') {
         return null;
       }
 
+      final authState = ref.read(authStateProvider);
+      print('[AppRouter] Auth 상태: $authState');
+      
       // Auth 상태가 로딩 중이면 대기
       if (authState.isLoading) {
         print('[AppRouter] Auth 로딩 중, redirect 하지 않음');
@@ -48,6 +58,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       );
       
       print('[AppRouter] 인증 상태: $isAuth');
+      
+      // 초기화 완료 표시
+      if (!isInitialized && isAuth) {
+        isInitialized = true;
+      }
       
       final isAuthRoute = state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup';
@@ -124,6 +139,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             markerType: extra?['markerType'] as String?,
           );
         },
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (context, state) => const ProfileEditScreen(),
       ),
     ],
   );

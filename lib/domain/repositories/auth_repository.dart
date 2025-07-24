@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/models/user_model.dart';
@@ -27,9 +28,14 @@ abstract class AuthRepository {
     String? phone,
     DateTime? birthDate,
     String? gender,
+    String? profileImageUrl,
   });
 
   Future<bool> checkEmailExists(String email);
   
   Future<void> resendConfirmationEmail(String email);
+  
+  Future<bool> verifyPassword(String email, String password);
+  
+  Future<String?> uploadProfileImage(String userId, File imageFile);
 }

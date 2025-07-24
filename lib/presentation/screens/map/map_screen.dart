@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/kakao_config.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../data/models/hospital_marker.dart';
 import '../../../core/services/location_service.dart';
 import '../../widgets/kakao_map_widget.dart';
@@ -147,29 +149,54 @@ class _MapScreenState extends State<MapScreen> {
   void _showFacilityInfo(HospitalMarker facility) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 핸들 바
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            
             // 시설 이름
             Text(
               facility.name,
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: AppTextStyles.headline5.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
             
             // 주소
             Row(
               children: [
-                const Icon(Icons.location_on, size: 20),
+                Icon(Icons.location_on, size: 20, color: AppColors.textSecondary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(facility.address),
+                  child: Text(
+                    facility.address,
+                    style: AppTextStyles.body2.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -178,9 +205,14 @@ class _MapScreenState extends State<MapScreen> {
             // 전화번호
             Row(
               children: [
-                const Icon(Icons.phone, size: 20),
+                Icon(Icons.phone, size: 20, color: AppColors.textSecondary),
                 const SizedBox(width: 8),
-                Text(facility.phoneNumber),
+                Text(
+                  facility.phoneNumber,
+                  style: AppTextStyles.body2.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -193,6 +225,11 @@ class _MapScreenState extends State<MapScreen> {
                     onPressed: () => _callFacility(facility.phoneNumber),
                     icon: const Icon(Icons.phone),
                     label: const Text('전화하기'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -201,6 +238,11 @@ class _MapScreenState extends State<MapScreen> {
                     onPressed: () => _navigateToFacility(facility),
                     icon: const Icon(Icons.directions),
                     label: const Text('길찾기'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
                 ),
               ],
