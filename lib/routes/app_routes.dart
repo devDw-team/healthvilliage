@@ -17,6 +17,8 @@ import '../presentation/screens/profile/profile_edit_screen.dart';
 import '../presentation/screens/roulette/roulette_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/map/map_screen.dart';
+import '../presentation/screens/password_change/current_password_screen.dart';
+import '../presentation/screens/password_change/new_password_screen.dart';
 import '../data/models/hospital_marker.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -143,6 +145,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/edit',
         builder: (context, state) => const ProfileEditScreen(),
+      ),
+      GoRoute(
+        path: '/password_change/current',
+        builder: (context, state) => const CurrentPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/password_change/new',
+        builder: (context, state) => const NewPasswordScreen(),
       ),
     ],
   );

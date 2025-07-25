@@ -318,7 +318,9 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
           _buildMenuItem(
             icon: Icons.lock,
             title: '비밀번호 변경',
-            onTap: () {},
+            onTap: () {
+              context.push('/password_change/current');
+            },
           ),
           _buildDivider(),
           _buildMenuItem(
