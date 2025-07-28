@@ -68,7 +68,7 @@ class _CurrentPasswordScreenState extends ConsumerState<CurrentPasswordScreen> {
             if (context.canPop()) {
               context.pop();
             } else {
-              context.go('/mypage');
+              context.go('/?tab=4');
             }
           },
         ),

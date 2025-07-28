@@ -7,21 +7,33 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../providers/auth_provider.dart';
 import '../mypage/mypage_screen.dart';
+import '../medicine/medicine_screen.dart';
 
 /// 홈 화면 - 메인 네비게이션과 주요 기능들
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final int initialTab;
+  
+  const HomeScreen({
+    Key? key,
+    this.initialTab = 0,
+  }) : super(key: key);
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialTab;
+  }
 
   final List<Widget> _screens = [
     const HomeTabScreen(),
-    const MedicineTabScreen(),
+    const MedicineScreen(showBackButton: false),  // 탭에서는 뒤로 가기 버튼 숨김
     const RouletteTabScreen(),
     const CalendarTabScreen(),
     const MyPageScreen(),
@@ -500,22 +512,6 @@ class RecentActivitySection extends StatelessWidget {
   }
 }
 
-/// 의약품 탭 화면 (임시)
-class MedicineTabScreen extends StatelessWidget {
-  const MedicineTabScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.medicine),
-      ),
-      body: const Center(
-        child: Text('의약품 화면\n(개발 예정)'),
-      ),
-    );
-  }
-}
 
 /// 룰렛 탭 화면 (임시)
 class RouletteTabScreen extends StatelessWidget {

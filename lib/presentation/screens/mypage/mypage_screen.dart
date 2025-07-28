@@ -19,17 +19,21 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('마이페이지'),
+        backgroundColor: AppColors.primary,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildHeader(),
               const SizedBox(height: 16),
               _buildProfileSection(),
               const SizedBox(height: 16),
               _buildPointSection(),
               const SizedBox(height: 16),
               _buildMenuSection(),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -37,17 +41,6 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      color: Colors.white,
-      child: Text(
-        AppStrings.myPage,
-        style: AppTextStyles.headline3,
-      ),
-    );
-  }
 
   Widget _buildProfileSection() {
     return Container(
@@ -288,7 +281,9 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
           _buildMenuItem(
             icon: Icons.favorite,
             title: '즐겨찾기',
-            onTap: () {},
+            onTap: () {
+              context.push('/mypage/favorites');
+            },
           ),
           _buildDivider(),
           _buildMenuItem(

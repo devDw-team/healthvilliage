@@ -9,8 +9,10 @@ import '../presentation/screens/calendar/calendar_screen.dart';
 import '../presentation/screens/emergency/emergency_screen.dart';
 import '../presentation/screens/home/home_screen.dart';
 import '../presentation/screens/hospital/hospital_search_screen.dart';
-import '../presentation/screens/medicine/medicine_search_screen.dart';
+import '../presentation/screens/medicine/medicine_screen.dart';
+import '../presentation/screens/medicine/medicine_detail_screen.dart';
 import '../presentation/screens/mypage/mypage_screen.dart';
+import '../domain/entities/medicine_entity.dart';
 import '../presentation/screens/pharmacy/pharmacy_search_screen.dart';
 import '../presentation/screens/prescription/prescription_screen.dart';
 import '../presentation/screens/profile/profile_edit_screen.dart';
@@ -19,6 +21,7 @@ import '../presentation/screens/splash/splash_screen.dart';
 import '../presentation/screens/map/map_screen.dart';
 import '../presentation/screens/password_change/current_password_screen.dart';
 import '../presentation/screens/password_change/new_password_screen.dart';
+import '../presentation/screens/mypage/favorites_screen.dart';
 import '../data/models/hospital_marker.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -98,7 +101,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) {
+          final tabIndex = state.uri.queryParameters['tab'];
+          return HomeScreen(
+            initialTab: tabIndex != null ? int.tryParse(tabIndex) ?? 0 : 0,
+          );
+        },
       ),
       GoRoute(
         path: '/hospital',
@@ -106,7 +114,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/medicine',
-        builder: (context, state) => const MedicineSearchScreen(),
+        builder: (context, state) => const MedicineScreen(showBackButton: true),
+        routes: [
+          GoRoute(
+            path: 'detail',
+            builder: (context, state) {
+              final medicine = state.extra as MedicineEntity;
+              return MedicineDetailScreen(medicine: medicine);
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/pharmacy',
@@ -127,6 +144,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/mypage',
         builder: (context, state) => const MyPageScreen(),
+        routes: [
+          GoRoute(
+            path: 'favorites',
+            builder: (context, state) => const FavoritesScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: '/prescription',

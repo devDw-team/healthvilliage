@@ -48,7 +48,7 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  context.go('/mypage');
+                  context.go('/?tab=4');
                 },
                 child: const Text('확인'),
               ),
@@ -99,7 +99,7 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
             if (context.canPop()) {
               context.pop();
             } else {
-              context.go('/password_change/current');
+              context.go('/?tab=4');
             }
           },
         ),

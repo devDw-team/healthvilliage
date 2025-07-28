@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,13 +43,15 @@ void main() async {
       Hive.openBox('app_settings'),
       Hive.openBox('user_data'),
       Hive.openBox('cache_data'),
+      Hive.openBox('medicine_cache'),
+      Hive.openBox('recent_searches'),
     ]);
     
     // Supabase 초기화
     await SupabaseService.instance.initialize();
     
-    // WebView 플랫폼별 초기화
-    if (Platform.isAndroid) {
+    // WebView 플랫폼별 초기화 (Android only, web은 자동)
+    if (!kIsWeb) {
       WebViewPlatform.instance;
     }
     
