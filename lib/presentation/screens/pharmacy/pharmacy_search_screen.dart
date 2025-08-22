@@ -9,9 +9,16 @@ import '../../../data/models/pharmacy_model.dart';
 import '../../../data/models/hospital_marker.dart';
 import '../../providers/pharmacy_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../providers/favorite_pharmacies_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class PharmacySearchScreen extends ConsumerStatefulWidget {
-  const PharmacySearchScreen({Key? key}) : super(key: key);
+  final bool isTabView;
+  
+  const PharmacySearchScreen({
+    Key? key,
+    this.isTabView = false,
+  }) : super(key: key);
 
   @override
   ConsumerState<PharmacySearchScreen> createState() => _PharmacySearchScreenState();
@@ -79,7 +86,7 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
         : const AsyncValue<List<PharmacyModel>>.data([]);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: widget.isTabView ? null : AppBar(
         title: const Text('약국 검색'),
         backgroundColor: AppColors.primary,
       ),
@@ -485,6 +492,8 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
                           }
                           
                           final pharmacy = pharmacies[index];
+                          final pharmacyId = pharmacy.id ?? '';
+                          
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: ListTile(
@@ -515,26 +524,6 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
                                       ),
                                     ],
                                   ),
-                                  // 디버깅용: 시군구 정보 표시
-                                  if (pharmacy.sgguCd != null || pharmacy.sgguCdNm != null) ...[
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.info_outline,
-                                          size: 16,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${pharmacy.sgguCdNm ?? ''} (코드: ${pharmacy.sgguCd ?? ''})',
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: Colors.blue,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
                                   if (pharmacy.phone != null) ...[
                                     const SizedBox(height: 4),
                                     Row(
@@ -573,47 +562,94 @@ class _PharmacySearchScreenState extends ConsumerState<PharmacySearchScreen> {
                                   ],
                                 ],
                               ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (pharmacy.phone != null)
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.phone,
-                                        color: AppColors.primary,
+                              trailing: Consumer(
+                                builder: (context, ref, _) {
+                                  final user = ref.watch(currentUserProvider);
+                                  
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (pharmacy.phone != null)
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.phone,
+                                            color: AppColors.primary,
+                                            size: 20,
+                                          ),
+                                          onPressed: () async {
+                                            final tel = 'tel:${pharmacy.phone}';
+                                            if (await canLaunchUrl(Uri.parse(tel))) {
+                                              await launchUrl(Uri.parse(tel));
+                                            }
+                                          },
+                                        ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.directions,
+                                          color: AppColors.primary,
+                                          size: 20,
+                                        ),
+                                        onPressed: () {
+                                          // 약국 정보를 HospitalMarker로 변환
+                                          final marker = HospitalMarker(
+                                            id: pharmacy.id,
+                                            name: pharmacy.name,
+                                            latitude: pharmacy.latitude,
+                                            longitude: pharmacy.longitude,
+                                            address: pharmacy.address,
+                                            phoneNumber: pharmacy.phone ?? '',
+                                            type: 'pharmacy',
+                                          );
+                                          
+                                          // 맵 화면으로 이동 (extra로 마커 정보 전달)
+                                          context.push('/map', extra: {
+                                            'initialMarker': marker,
+                                            'markerType': 'pharmacy',
+                                          });
+                                        },
                                       ),
-                                      onPressed: () async {
-                                        final tel = 'tel:${pharmacy.phone}';
-                                        if (await canLaunchUrl(Uri.parse(tel))) {
-                                          await launchUrl(Uri.parse(tel));
-                                        }
-                                      },
-                                    ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.directions,
-                                      color: AppColors.primary,
-                                    ),
-                                    onPressed: () {
-                                      // 약국 정보를 HospitalMarker로 변환
-                                      final marker = HospitalMarker(
-                                        id: pharmacy.id,
-                                        name: pharmacy.name,
-                                        latitude: pharmacy.latitude,
-                                        longitude: pharmacy.longitude,
-                                        address: pharmacy.address,
-                                        phoneNumber: pharmacy.phone ?? '',
-                                        type: 'pharmacy',
-                                      );
-                                      
-                                                                             // 맵 화면으로 이동 (extra로 마커 정보 전달)
-                                      context.push('/map', extra: {
-                                        'initialMarker': marker,
-                                        'markerType': 'pharmacy',
-                                      });
-                                    },
-                                  ),
-                                ],
+                                      // 즐겨찾기 버튼
+                                      if (user != null)
+                                        Consumer(
+                                          builder: (context, ref, _) {
+                                            final isFavoriteAsync = ref.watch(isPharmacyFavoriteProvider(pharmacyId));
+                                            
+                                            return isFavoriteAsync.when(
+                                              data: (isFavorite) => IconButton(
+                                                icon: Icon(
+                                                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                                                  color: isFavorite ? Colors.red : AppColors.textSecondary,
+                                                  size: 20,
+                                                ),
+                                                onPressed: () async {
+                                                  await ref.read(favoritePharmaciesProvider.notifier).toggleFavorite(pharmacyId);
+                                                  
+                                                  if (!context.mounted) return;
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        isFavorite 
+                                                          ? '즐겨찾기에서 제거되었습니다'
+                                                          : '즐겨찾기에 추가되었습니다',
+                                                      ),
+                                                      duration: const Duration(seconds: 2),
+                                                      backgroundColor: isFavorite ? AppColors.textSecondary : AppColors.primary,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                              loading: () => const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                              ),
+                                              error: (_, __) => const Icon(Icons.favorite_border, size: 20),
+                                            );
+                                          },
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                           );

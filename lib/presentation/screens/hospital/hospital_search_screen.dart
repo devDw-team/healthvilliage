@@ -9,9 +9,16 @@ import '../../../data/models/hospital_model.dart';
 import '../../../data/models/hospital_marker.dart';
 import '../../providers/hospital_provider.dart';
 import '../../providers/pharmacy_provider.dart'; // 시도/시군구 목록 재사용
+import '../../providers/favorite_hospitals_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class HospitalSearchScreen extends ConsumerStatefulWidget {
-  const HospitalSearchScreen({Key? key}) : super(key: key);
+  final bool isTabView;
+  
+  const HospitalSearchScreen({
+    Key? key,
+    this.isTabView = false,
+  }) : super(key: key);
 
   @override
   ConsumerState<HospitalSearchScreen> createState() => _HospitalSearchScreenState();
@@ -76,7 +83,7 @@ class _HospitalSearchScreenState extends ConsumerState<HospitalSearchScreen> {
         : const AsyncValue<List<HospitalModel>>.data([]);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: widget.isTabView ? null : AppBar(
         title: const Text('병원 검색'),
         backgroundColor: AppColors.primary,
       ),
@@ -538,6 +545,8 @@ class _HospitalSearchScreenState extends ConsumerState<HospitalSearchScreen> {
                           }
                           
                           final hospital = hospitals[index];
+                          final hospitalId = hospital.id ?? '';
+                          
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: ListTile(
@@ -653,47 +662,94 @@ class _HospitalSearchScreenState extends ConsumerState<HospitalSearchScreen> {
                                   ],
                                 ],
                               ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (hospital.phone != null)
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.phone,
-                                        color: AppColors.primary,
+                              trailing: Consumer(
+                                builder: (context, ref, _) {
+                                  final user = ref.watch(currentUserProvider);
+                                  
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (hospital.phone != null)
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.phone,
+                                            color: AppColors.primary,
+                                            size: 20,
+                                          ),
+                                          onPressed: () async {
+                                            final tel = 'tel:${hospital.phone}';
+                                            if (await canLaunchUrl(Uri.parse(tel))) {
+                                              await launchUrl(Uri.parse(tel));
+                                            }
+                                          },
+                                        ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.directions,
+                                          color: AppColors.primary,
+                                          size: 20,
+                                        ),
+                                        onPressed: () {
+                                          // 병원 정보를 HospitalMarker로 변환
+                                          final marker = HospitalMarker(
+                                            id: hospital.id,
+                                            name: hospital.name,
+                                            latitude: hospital.latitude,
+                                            longitude: hospital.longitude,
+                                            address: hospital.address,
+                                            phoneNumber: hospital.phone ?? '',
+                                            type: 'hospital',
+                                          );
+                                          
+                                          // 맵 화면으로 이동 (extra로 마커 정보 전달)
+                                          context.push('/map', extra: {
+                                            'initialMarker': marker,
+                                            'markerType': 'hospital',
+                                          });
+                                        },
                                       ),
-                                      onPressed: () async {
-                                        final tel = 'tel:${hospital.phone}';
-                                        if (await canLaunchUrl(Uri.parse(tel))) {
-                                          await launchUrl(Uri.parse(tel));
-                                        }
-                                      },
-                                    ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.directions,
-                                      color: AppColors.primary,
-                                    ),
-                                    onPressed: () {
-                                      // 병원 정보를 HospitalMarker로 변환
-                                      final marker = HospitalMarker(
-                                        id: hospital.id,
-                                        name: hospital.name,
-                                        latitude: hospital.latitude,
-                                        longitude: hospital.longitude,
-                                        address: hospital.address,
-                                        phoneNumber: hospital.phone ?? '',
-                                        type: 'hospital',
-                                      );
-                                      
-                                      // 맵 화면으로 이동 (extra로 마커 정보 전달)
-                                      context.push('/map', extra: {
-                                        'initialMarker': marker,
-                                        'markerType': 'hospital',
-                                      });
-                                    },
-                                  ),
-                                ],
+                                      // 즐겨찾기 버튼
+                                      if (user != null)
+                                        Consumer(
+                                          builder: (context, ref, _) {
+                                            final isFavoriteAsync = ref.watch(isHospitalFavoriteProvider(hospitalId));
+                                            
+                                            return isFavoriteAsync.when(
+                                              data: (isFavorite) => IconButton(
+                                                icon: Icon(
+                                                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                                                  color: isFavorite ? Colors.red : AppColors.textSecondary,
+                                                  size: 20,
+                                                ),
+                                                onPressed: () async {
+                                                  await ref.read(favoriteHospitalsProvider.notifier).toggleFavorite(hospitalId);
+                                                  
+                                                  if (!context.mounted) return;
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        isFavorite 
+                                                          ? '즐겨찾기에서 제거되었습니다'
+                                                          : '즐겨찾기에 추가되었습니다',
+                                                      ),
+                                                      duration: const Duration(seconds: 2),
+                                                      backgroundColor: isFavorite ? AppColors.textSecondary : AppColors.primary,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                              loading: () => const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                              ),
+                                              error: (_, __) => const Icon(Icons.favorite_border, size: 20),
+                                            );
+                                          },
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                           );

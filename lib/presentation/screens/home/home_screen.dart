@@ -5,9 +5,16 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/location_service.dart';
+import '../../../data/models/hospital_marker.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/recent_favorites_provider.dart';
+import '../../providers/favorite_hospitals_provider.dart';
+import '../../providers/favorite_pharmacies_provider.dart';
+import '../../providers/favorite_medicines_provider.dart';
 import '../mypage/mypage_screen.dart';
 import '../medicine/medicine_screen.dart';
+import '../search/search_screen.dart';
 
 /// 홈 화면 - 메인 네비게이션과 주요 기능들
 class HomeScreen extends ConsumerStatefulWidget {
@@ -33,9 +40,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   final List<Widget> _screens = [
     const HomeTabScreen(),
+    const SearchTabScreen(),
     const MedicineScreen(showBackButton: false),  // 탭에서는 뒤로 가기 버튼 숨김
-    const RouletteTabScreen(),
-    const CalendarTabScreen(),
     const MyPageScreen(),
   ];
 
@@ -60,16 +66,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             label: AppStrings.home,
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: AppStrings.search,
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.medication),
             label: AppStrings.medicine,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.casino),
-            label: AppStrings.roulette,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: AppStrings.calendar,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -82,8 +84,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 /// 홈 탭 화면
-class HomeTabScreen extends StatelessWidget {
+class HomeTabScreen extends ConsumerStatefulWidget {
   const HomeTabScreen({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<HomeTabScreen> createState() => _HomeTabScreenState();
+}
+
+class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 홈 화면 로딩 시 즐겨찾기 데이터 초기화
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFavorites();
+    });
+  }
+
+  void _loadFavorites() {
+    final user = ref.read(currentUserProvider);
+    if (user != null) {
+      // 병원 즐겨찾기 로드
+      ref.read(favoriteHospitalsProvider.notifier).loadFavorites(user.id);
+      // 약국 즐겨찾기 로드
+      ref.read(favoritePharmaciesProvider.notifier).loadFavorites(user.id);
+      // 의약품 즐겨찾기 로드
+      ref.read(favoriteMedicinesProvider.notifier).loadFavorites(user.id);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,12 +183,12 @@ class HomeTabScreen extends StatelessWidget {
             QuickAccessSection(),
             SizedBox(height: 24),
             
-            // 내 주변 병원/약국
-            NearbyFacilitiesSection(),
+            // 즐겨찾기 섹션
+            FavoritesSection(),
             SizedBox(height: 24),
             
-            // 최근 활동
-            RecentActivitySection(),
+            // 내 주변 병원/약국
+            NearbyFacilitiesSection(),
           ],
         ),
       ),
@@ -254,48 +282,49 @@ class WelcomeSection extends ConsumerWidget {
               ),
             ],
           ),
-          if (currentUser != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.stars,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '포인트: ${currentUser.points ?? 0}P',
-                    style: AppTextStyles.caption.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Icon(
-                    Icons.trending_up,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Lv.${currentUser.level ?? 1}',
-                    style: AppTextStyles.caption.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          // 포인트 및 레벨 표시 - Phase 2에서 구현 예정
+          // if (currentUser != null) ...[
+          //   const SizedBox(height: 16),
+          //   Container(
+          //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          //     decoration: BoxDecoration(
+          //       color: Colors.white.withOpacity(0.2),
+          //       borderRadius: BorderRadius.circular(20),
+          //     ),
+          //     child: Row(
+          //       mainAxisSize: MainAxisSize.min,
+          //       children: [
+          //         Icon(
+          //           Icons.stars,
+          //           color: Colors.white,
+          //           size: 16,
+          //         ),
+          //         const SizedBox(width: 4),
+          //         Text(
+          //           '포인트: ${currentUser.points ?? 0}P',
+          //           style: AppTextStyles.caption.copyWith(
+          //             color: Colors.white,
+          //             fontWeight: FontWeight.w600,
+          //           ),
+          //         ),
+          //         const SizedBox(width: 12),
+          //         Icon(
+          //           Icons.trending_up,
+          //           color: Colors.white,
+          //           size: 16,
+          //         ),
+          //         const SizedBox(width: 4),
+          //         Text(
+          //           'Lv.${currentUser.level ?? 1}',
+          //           style: AppTextStyles.caption.copyWith(
+          //             color: Colors.white,
+          //             fontWeight: FontWeight.w600,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ],
         ],
       ),
     );
@@ -324,7 +353,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: AppStrings.hospital,
                 color: AppColors.hospital,
                 onTap: () {
-                  context.push('/hospital');
+                  context.push('/search?tab=0');
                 },
               ),
             ),
@@ -335,7 +364,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: AppStrings.pharmacy,
                 color: AppColors.pharmacy,
                 onTap: () {
-                  context.push('/pharmacy');
+                  context.push('/search?tab=1');
                 },
               ),
             ),
@@ -346,7 +375,7 @@ class QuickAccessSection extends StatelessWidget {
                 label: AppStrings.emergencyRoom,
                 color: AppColors.emergency,
                 onTap: () {
-                  context.push('/emergency');
+                  context.push('/search?tab=2');
                 },
               ),
             ),
@@ -411,11 +440,11 @@ class _QuickAccessButton extends StatelessWidget {
 }
 
 /// 내 주변 병원/약국 섹션
-class NearbyFacilitiesSection extends StatelessWidget {
+class NearbyFacilitiesSection extends ConsumerWidget {
   const NearbyFacilitiesSection({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -428,7 +457,8 @@ class NearbyFacilitiesSection extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // TODO: 전체 목록으로 이동
+                // 내 주변 의료시설 지도로 이동
+                context.push('/map/nearby');
               },
               child: const Text(AppStrings.more),
             ),
@@ -441,8 +471,20 @@ class NearbyFacilitiesSection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         ElevatedButton.icon(
-          onPressed: () {
-            // TODO: 위치 권한 요청
+          onPressed: () async {
+            // 위치 권한 요청
+            final hasPermission = await LocationService.requestLocationPermission();
+            if (hasPermission && context.mounted) {
+              // 권한 허용 시 내 주변 의료시설 지도로 이동
+              context.push('/map/nearby');
+            } else if (!hasPermission && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('위치 권한이 필요합니다. 설정에서 권한을 허용해주세요.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
           },
           icon: const Icon(Icons.location_on),
           label: const Text('위치 권한 허용'),
@@ -452,56 +494,98 @@ class NearbyFacilitiesSection extends StatelessWidget {
   }
 }
 
-/// 최근 활동 섹션
-class RecentActivitySection extends StatelessWidget {
-  const RecentActivitySection({Key? key}) : super(key: key);
+/// 즐겨찾기 섹션
+class FavoritesSection extends ConsumerWidget {
+  const FavoritesSection({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favoritesAsync = ref.watch(recentFavoritesProvider);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '최근 활동',
-          style: AppTextStyles.headline6,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '즐겨찾기',
+              style: AppTextStyles.headline6,
+            ),
+            TextButton(
+              onPressed: () {
+                context.push('/mypage/favorites');
+              },
+              child: const Text('더보기'),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        Card(
-          child: Padding(
+        favoritesAsync.when(
+          data: (favorites) {
+            if (favorites.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.favorite_border,
+                      size: 48,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '즐겨찾기한 항목이 없습니다',
+                      style: AppTextStyles.body2.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '자주 이용하는 병원, 약국, 의약품을 즐겨찾기해보세요',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            return Column(
+              children: favorites.map((item) => _buildFavoriteItem(context, ref, item)).toList(),
+            );
+          },
+          loading: () => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          error: (error, stack) => Container(
             padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.casino,
-                    color: AppColors.accent,
-                  ),
+                Icon(
+                  Icons.error_outline,
+                  color: AppColors.error,
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '오늘의 룰렛에 참여해보세요!',
-                        style: AppTextStyles.subtitle1,
-                      ),
-                      Text(
-                        '매일 포인트를 획득할 수 있는 기회',
-                        style: AppTextStyles.body2,
-                      ),
-                    ],
+                Expanded(
+                  child: Text(
+                    '즐겨찾기를 불러올 수 없습니다',
+                    style: AppTextStyles.body2.copyWith(
+                      color: AppColors.error,
+                    ),
                   ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: AppColors.textTertiary,
                 ),
               ],
             ),
@@ -510,40 +594,162 @@ class RecentActivitySection extends StatelessWidget {
       ],
     );
   }
-}
 
-
-/// 룰렛 탭 화면 (임시)
-class RouletteTabScreen extends StatelessWidget {
-  const RouletteTabScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.roulette),
-      ),
-      body: const Center(
-        child: Text('룰렛 화면\n(개발 예정)'),
+  Widget _buildFavoriteItem(BuildContext context, WidgetRef ref, FavoriteItem item) {
+    Color typeColor;
+    IconData typeIcon;
+    
+    switch (item.type) {
+      case FavoriteType.hospital:
+        typeColor = AppColors.hospital;
+        typeIcon = Icons.local_hospital;
+        break;
+      case FavoriteType.pharmacy:
+        typeColor = AppColors.pharmacy;
+        typeIcon = Icons.local_pharmacy;
+        break;
+      case FavoriteType.emergency:
+        typeColor = AppColors.emergency;
+        typeIcon = Icons.emergency;
+        break;
+      case FavoriteType.medicine:
+        typeColor = AppColors.accent;
+        typeIcon = Icons.medication;
+        break;
+    }
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          // 타입에 따라 다른 페이지로 이동
+          switch (item.type) {
+            case FavoriteType.hospital:
+            case FavoriteType.emergency:
+              final hospital = item.data;
+              context.push('/map', extra: {
+                'initialMarker': HospitalMarker(
+                  id: hospital.hospitalId,
+                  name: hospital.name,
+                  address: hospital.address,
+                  phoneNumber: hospital.phone ?? '',
+                  latitude: hospital.latitude,
+                  longitude: hospital.longitude,
+                  type: 'hospital',
+                ),
+                'markerType': 'hospital',
+              });
+              break;
+            case FavoriteType.pharmacy:
+              final pharmacy = item.data;
+              context.push('/map', extra: {
+                'initialMarker': HospitalMarker(
+                  id: pharmacy.pharmacyId,
+                  name: pharmacy.name,
+                  address: pharmacy.address,
+                  phoneNumber: pharmacy.phone ?? '',
+                  latitude: pharmacy.latitude,
+                  longitude: pharmacy.longitude,
+                  type: 'pharmacy',
+                ),
+                'markerType': 'pharmacy',
+              });
+              break;
+            case FavoriteType.medicine:
+              context.push('/medicine/detail', extra: item.data);
+              break;
+          }
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // 타입 아이콘
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: typeColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  typeIcon,
+                  color: typeColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // 정보
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: typeColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.type.label,
+                            style: AppTextStyles.caption.copyWith(
+                              color: typeColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: AppTextStyles.subtitle2.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (item.subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        item.subtitle!,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // 화살표
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: AppColors.textTertiary,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-/// 캘린더 탭 화면 (임시)
-class CalendarTabScreen extends StatelessWidget {
-  const CalendarTabScreen({Key? key}) : super(key: key);
+/// 검색 탭 화면
+class SearchTabScreen extends StatelessWidget {
+  const SearchTabScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.calendar),
-      ),
-      body: const Center(
-        child: Text('캘린더 화면\n(개발 예정)'),
-      ),
-    );
+    return const SearchScreen();
   }
 }
 

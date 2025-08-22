@@ -1,0 +1,500 @@
+# 헬스빌리지(Health Village) Cursor Rules
+
+## 프로젝트 개요
+헬스빌리지는 공공데이터 API를 활용한 Flutter 기반 병원/약국 찾기 앱으로, 게임화 요소를 통해 사용자의 지속적인 건강관리를 유도하는 모바일 애플리케이션입니다.
+
+## 기술 스택
+
+### Frontend
+- **Framework**: Flutter 3.0+
+- **State Management**: Riverpod 2.0
+- **Local Storage**: Hive
+- **HTTP Client**: Dio
+- **Location**: Geolocator
+- **Maps**: Google Maps Flutter
+- **Image/Camera**: image_picker
+- **OCR**: google_ml_kit
+- **Notifications**: flutter_local_notifications
+- **Security**: flutter_secure_storage
+
+### Backend (Optional)
+- **Runtime**: Node.js + Express
+- **Database**: PostgreSQL + Redis
+- **Authentication**: JWT
+- **Real-time**: Socket.io
+
+### APIs
+- 건강보험심사평가원 API
+  - 병원정보서비스v2 (http://apis.data.go.kr/B551182/hospInfoServicev2)
+  - 약국정보서비스 (http://apis.data.go.kr/B551182/pharmacyInfoService)
+- 응급의료정보제공 API
+- 식품의약품안전처 의약품 정보 API
+- Google Maps/Places API
+
+## 프로젝트 구조
+
+```
+lib/
+├── main.dart
+├── app.dart
+├── core/
+│   ├── constants/
+│   │   ├── api_constants.dart
+│   │   ├── app_colors.dart
+│   │   └── app_strings.dart
+│   ├── errors/
+│   ├── network/
+│   ├── services/
+│   │   ├── hospital_api_service.dart
+│   │   ├── pharmacy_api_service.dart
+│   │   └── supabase_service.dart
+│   └── utils/
+├── data/
+│   ├── datasources/
+│   │   ├── remote/
+│   │   └── local/
+│   ├── models/
+│   │   ├── hospital_model.dart
+│   │   ├── pharmacy_model.dart
+│   │   └── user_model.dart
+│   └── repositories/
+├── domain/
+│   ├── entities/
+│   ├── repositories/
+│   └── usecases/
+├── presentation/
+│   ├── providers/
+│   │   ├── hospital_provider.dart
+│   │   ├── pharmacy_provider.dart
+│   │   └── auth_provider.dart
+│   ├── screens/
+│   │   ├── splash/
+│   │   ├── home/
+│   │   ├── hospital/
+│   │   │   └── hospital_search_screen.dart
+│   │   ├── pharmacy/
+│   │   │   └── pharmacy_search_screen.dart
+│   │   ├── medicine/
+│   │   ├── roulette/
+│   │   ├── calendar/
+│   │   ├── mypage/
+│   │   └── prescription/
+│   └── widgets/
+│       ├── common/
+│       └── specific/
+└── routes/
+```
+
+## 코딩 규칙
+
+### 1. 네이밍 컨벤션
+```dart
+// 클래스: PascalCase
+class HospitalCard extends StatelessWidget {}
+
+// 변수/함수: camelCase
+final hospitalList = [];
+void searchHospital() {}
+
+// 상수: SCREAMING_SNAKE_CASE
+const API_BASE_URL = 'https://api.example.com';
+
+// 파일명: snake_case
+hospital_card.dart
+medicine_search_screen.dart
+
+// Provider: 기능명 + Provider
+final hospitalListProvider = StateNotifierProvider<...>(...);
+```
+
+### 2. 위젯 구조
+```dart
+// StatelessWidget 기본 구조
+class CustomWidget extends StatelessWidget {
+  final String title;
+  final VoidCallback? onTap;
+  
+  const CustomWidget({
+    Key? key,
+    required this.title,
+    this.onTap,
+  }) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
+
+// 화면별 폴더 구조
+// screens/home/
+//   ├── home_screen.dart
+//   ├── widgets/
+//   │   ├── hospital_card.dart
+//   │   └── search_bar.dart
+//   └── providers/
+//       └── hospital_provider.dart
+```
+
+### 3. API 호출 패턴
+```dart
+// Repository 패턴 사용
+abstract class HospitalRepository {
+  Future<List<Hospital>> getNearbyHospitals({
+    required double latitude,
+    required double longitude,
+    int radius = 1000,
+  });
+}
+
+// HIRA API (건강보험심사평가원) 호출 패턴
+class HospitalApiService {
+  static const String baseUrl = 'http://apis.data.go.kr/B551182/hospInfoServicev2';
+  
+  Future<List<HospitalModel>> getHospitalList({
+    String? sidoCd,
+    String? sgguCd,
+    String? clCd,  // 병원 종별코드
+    String? yadmNm, // 병원명
+  }) async {
+    final queryParameters = {
+      'ServiceKey': dotenv.env['HIRA_API_KEY'],
+      'pageNo': pageNo.toString(),
+      'numOfRows': numOfRows.toString(),
+      if (sidoCd != null) 'sidoCd': sidoCd,
+      if (clCd != null) 'clCd': clCd,
+    };
+    
+    final response = await _dio.get('/getHospBasisList', queryParameters: queryParameters);
+    
+    // XML 파싱
+    final document = xml.XmlDocument.parse(response.data);
+    final items = document.findAllElements('item');
+    return items.map((item) => HospitalModel.fromXml(item)).toList();
+  }
+}
+
+// Error Handling
+try {
+  final result = await repository.getNearbyHospitals();
+  return result;
+} on DioError catch (e) {
+  throw ServerException(e.message);
+} catch (e) {
+  throw UnknownException();
+}
+```
+
+### 4. 상태 관리
+```dart
+// Riverpod StateNotifier 사용
+class HospitalListNotifier extends StateNotifier<AsyncValue<List<Hospital>>> {
+  HospitalListNotifier() : super(const AsyncValue.loading());
+  
+  Future<void> loadHospitals() async {
+    state = const AsyncValue.loading();
+    try {
+      final hospitals = await _repository.getNearbyHospitals();
+      state = AsyncValue.data(hospitals);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+```
+
+## UI/UX 가이드라인
+
+### 1. 색상 팔레트
+```dart
+class AppColors {
+  static const primary = Color(0xFF2196F3);      // Blue
+  static const secondary = Color(0xFF4CAF50);    // Green  
+  static const accent = Color(0xFFFFC107);       // Amber
+  static const error = Color(0xFFF44336);        // Red
+  static const background = Color(0xFFF5F5F5);   // Light Grey
+  static const surface = Colors.white;
+  static const textPrimary = Color(0xFF212121);
+  static const textSecondary = Color(0xFF757575);
+}
+```
+
+### 2. 타이포그래피
+```dart
+class AppTextStyles {
+  static const headline1 = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    fontFamily: 'Pretendard',
+  );
+  
+  static const body1 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    fontFamily: 'Pretendard',
+  );
+}
+```
+
+### 3. 공통 위젯
+```dart
+// 로딩 인디케이터
+Widget buildLoadingIndicator() {
+  return Center(
+    child: CircularProgressIndicator(
+      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+    ),
+  );
+}
+
+// 에러 처리
+Widget buildError(String message, VoidCallback onRetry) {
+  return Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.error_outline, size: 48, color: AppColors.error),
+        SizedBox(height: 16),
+        Text(message),
+        TextButton(onPressed: onRetry, child: Text('다시 시도')),
+      ],
+    ),
+  );
+}
+
+// 접을 수 있는 검색 필터 섹션
+class CollapsibleFilterSection extends StatefulWidget {
+  final Widget filterContent;
+  final String title;
+  final List<Widget> selectedFilters;
+  
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title),
+                Icon(_isExpanded ? Icons.expand_less : Icons.expand_more),
+              ],
+            ),
+          ),
+          if (_isExpanded) filterContent,
+        ],
+      ),
+    );
+  }
+}
+
+// 검색 결과 카드 (병원/약국 공통)
+class FacilityCard extends StatelessWidget {
+  final String name;
+  final String address;
+  final String? phone;
+  final String? category;
+  final double? distance;
+  final VoidCallback? onPhoneCall;
+  final VoidCallback? onDirections;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        title: Text(name),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [Icon(Icons.location_on), Text(address)]),
+            if (phone != null) Row(children: [Icon(Icons.phone), Text(phone!)]),
+            if (distance != null) Text('${distance!.toStringAsFixed(0)}m'),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (phone != null) IconButton(icon: Icon(Icons.phone), onPressed: onPhoneCall),
+            IconButton(icon: Icon(Icons.directions), onPressed: onDirections),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+## 보안 및 개인정보 보호
+
+### 1. 민감 정보 처리
+```dart
+// API 키는 환경 변수로 관리
+// .env 파일 (git ignore에 추가)
+API_KEY=your_api_key_here
+
+// 사용
+final apiKey = dotenv.env['API_KEY'];
+
+// 의료 정보 암호화 저장
+final encryptedData = await encryptionService.encrypt(prescriptionData);
+await secureStorage.write(key: 'prescription', value: encryptedData);
+```
+
+### 2. 생체 인증
+```dart
+// 처방전 접근 시 생체 인증 필수
+final isAuthenticated = await LocalAuthentication().authenticate(
+  localizedReason: '처방전 정보를 보려면 인증이 필요합니다',
+  options: AuthenticationOptions(biometricOnly: true),
+);
+```
+
+## 성능 최적화
+
+### 1. 이미지 최적화
+```dart
+// 캐시 이미지 사용
+CachedNetworkImage(
+  imageUrl: hospital.imageUrl,
+  placeholder: (context, url) => Shimmer.fromColors(),
+  errorWidget: (context, url, error) => Icon(Icons.error),
+)
+
+// 이미지 압축
+final compressedImage = await FlutterImageCompress.compressWithFile(
+  imageFile.path,
+  quality: 85,
+);
+```
+
+### 2. 리스트 최적화
+```dart
+// ListView.builder 사용 (lazy loading)
+ListView.builder(
+  itemCount: hospitals.length,
+  itemBuilder: (context, index) {
+    return HospitalCard(hospital: hospitals[index]);
+  },
+)
+
+// 무한 스크롤
+ScrollController _scrollController = ScrollController();
+_scrollController.addListener(() {
+  if (_scrollController.position.pixels == 
+      _scrollController.position.maxScrollExtent) {
+    _loadMoreHospitals();
+  }
+});
+```
+
+## 테스트 전략
+
+### 1. 단위 테스트
+```dart
+// test/unit/repositories/hospital_repository_test.dart
+test('getNearbyHospitals returns list of hospitals', () async {
+  final repository = MockHospitalRepository();
+  when(repository.getNearbyHospitals()).thenAnswer(
+    (_) async => [Hospital(id: '1', name: 'Test Hospital')],
+  );
+  
+  final result = await repository.getNearbyHospitals();
+  expect(result.length, 1);
+  expect(result.first.name, 'Test Hospital');
+});
+```
+
+### 2. 위젯 테스트
+```dart
+// test/widget/hospital_card_test.dart
+testWidgets('HospitalCard displays hospital name', (tester) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: HospitalCard(
+        hospital: Hospital(name: '서울대학교병원'),
+      ),
+    ),
+  );
+  
+  expect(find.text('서울대학교병원'), findsOneWidget);
+});
+```
+
+## Git 컨벤션
+
+### 브랜치 전략
+```
+main
+├── develop
+│   ├── feature/home-screen
+│   ├── feature/medicine-search
+│   └── feature/roulette-game
+└── hotfix/critical-bug
+```
+
+### 커밋 메시지
+```
+feat: 병원 검색 기능 추가
+fix: 룰렛 회전 애니메이션 버그 수정
+docs: README 업데이트
+style: 코드 포맷팅
+refactor: API 호출 로직 개선
+test: 병원 검색 테스트 추가
+chore: 의존성 업데이트
+```
+
+## 개발 순서
+
+1. **Phase 1 (MVP)** ✅
+   - 기본 병원/약국 검색 ✅
+   - 시도/시군구 필터링 ✅
+   - 병원 종별 필터 (상급종합병원, 종합병원, 병원, 의원 등) ✅
+   - 약국명/병원명 검색 ✅
+   - 전화 연결 및 지도 앱 연동 ✅
+   - 페이지네이션 (50개씩) ✅
+   - 지도 통합
+   - 사용자 인증 ✅
+
+2. **Phase 2**
+   - 포인트 시스템
+   - 일일 보상
+   - 룰렛 기능
+
+3. **Phase 3**
+   - 처방전 스캔/관리
+   - 복약 알림
+   - 약물 정보 검색
+
+4. **Phase 4**
+   - 고도화 기능
+   - 성능 최적화
+   - 사용자 피드백 반영
+
+## HIRA API 주의사항
+
+1. **API 키 관리**
+   - `.env` 파일에 `HIRA_API_KEY` 설정 필수
+   - 환경변수는 반드시 `.gitignore`에 추가
+
+2. **XML 응답 처리**
+   - 건강보험심사평가원 API는 XML 형식으로 응답
+   - `xml` 패키지를 사용하여 파싱
+   - 응답 코드 '00'이 정상
+
+3. **시군구 코드 이슈**
+   - HIRA API의 시군구 코드가 표준 행정구역 코드와 다를 수 있음
+   - 시군구 코드 대신 시군구명(emdongNm)으로 검색하는 방식 사용
+
+4. **좌표계**
+   - WGS84 좌표계 사용 (경도/위도)
+   - XPos: 경도, YPos: 위도 (대문자 주의)
+
+5. **검색 필터 구현**
+   - 병원: 종별코드(clCd)로 필터링 가능
+   - 약국: 시도/시군구/약국명으로 검색
+   - 최소 하나의 검색 조건 필수
+
+이 규칙을 따라 일관성 있고 유지보수가 용이한 코드를 작성하세요.

@@ -7,7 +7,8 @@ class HospitalMarker {
   final String address;
   final String phoneNumber;
   final String? imageUrl;
-  final String type; // 'hospital' or 'pharmacy'
+  final String type; // 'hospital' or 'pharmacy' or 'emergency'
+  final double? distance; // 현재 위치로부터의 거리 (미터)
 
   HospitalMarker({
     required this.id,
@@ -18,6 +19,7 @@ class HospitalMarker {
     required this.phoneNumber,
     this.imageUrl,
     required this.type,
+    this.distance,
   });
 
   // JSON 변환을 위한 메서드
@@ -31,6 +33,7 @@ class HospitalMarker {
       phoneNumber: json['phoneNumber'],
       imageUrl: json['imageUrl'],
       type: json['type'],
+      distance: json['distance']?.toDouble(),
     );
   }
 
@@ -44,6 +47,7 @@ class HospitalMarker {
       'phoneNumber': phoneNumber,
       'imageUrl': imageUrl,
       'type': type,
+      'distance': distance,
     };
   }
 } 

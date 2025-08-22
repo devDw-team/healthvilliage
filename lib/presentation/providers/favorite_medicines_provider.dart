@@ -3,17 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/medicine.dart';
 import '../../domain/usecases/manage_favorite_medicines_use_case.dart';
 import 'medicine_provider.dart';
+import 'auth_provider.dart';
 
 // Favorite Medicines State Provider
 final favoriteMedicinesProvider = StateNotifierProvider<FavoriteMedicinesNotifier, AsyncValue<List<Medicine>>>((ref) {
   final useCase = ref.watch(manageFavoriteMedicinesUseCaseProvider);
-  return FavoriteMedicinesNotifier(useCase);
+  return FavoriteMedicinesNotifier(useCase, ref);
 });
 
 class FavoriteMedicinesNotifier extends StateNotifier<AsyncValue<List<Medicine>>> {
   final ManageFavoriteMedicinesUseCase _useCase;
+  final Ref _ref;
 
-  FavoriteMedicinesNotifier(this._useCase) : super(const AsyncValue.data([]));
+  FavoriteMedicinesNotifier(this._useCase, this._ref) : super(const AsyncValue.data([])) {
+    _init();
+  }
+
+  void _init() {
+    _ref.listen(authStateProvider, (previous, next) {
+      next.whenData((user) {
+        if (user != null) {
+          loadFavorites(user.id);
+        } else {
+          state = const AsyncValue.data([]);
+        }
+      });
+    });
+  }
 
   Future<void> loadFavorites(String userId) async {
     state = const AsyncValue.loading();

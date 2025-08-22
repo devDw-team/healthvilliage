@@ -1,18 +1,20 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:xml/xml.dart' as xml;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/pharmacy_model.dart';
 
 class PharmacyApiService {
   static const String baseUrl = 'http://apis.data.go.kr/B551182/pharmacyInfoService';
   final Dio _dio;
   final String? _apiKey;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   PharmacyApiService() 
     : _dio = Dio(BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 30),  // 30초로 증가
+        receiveTimeout: const Duration(seconds: 30),  // 30초로 증가
       )),
       _apiKey = dotenv.env['HIRA_API_KEY'] {
     _dio.interceptors.add(LogInterceptor(
@@ -23,10 +25,58 @@ class PharmacyApiService {
     ));
   }
 
-  /// 약국 목록 조회
+  /// 약국 목록 조회 (재시도 로직 포함)
   Future<List<PharmacyModel>> getPharmacyList({
     int pageNo = 1,
     int numOfRows = 10,
+    String? sidoCd,
+    String? sgguCd,
+    String? emdongNm,
+    String? yadmNm,
+    double? xPos,
+    double? yPos,
+    int? radius,
+  }) async {
+    // 최대 3번 재시도
+    int maxRetries = 3;
+    int retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        return await _getPharmacyListInternal(
+          pageNo: pageNo,
+          numOfRows: numOfRows,
+          sidoCd: sidoCd,
+          sgguCd: sgguCd,
+          emdongNm: emdongNm,
+          yadmNm: yadmNm,
+          xPos: xPos,
+          yPos: yPos,
+          radius: radius,
+        );
+      } catch (e) {
+        if (e is DioException && e.type == DioExceptionType.receiveTimeout) {
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            print('Max retries reached. Throwing exception.');
+            rethrow;
+          }
+          print('Timeout occurred. Retrying... (Attempt ${retryCount + 1}/$maxRetries)');
+          // 재시도 전 짧은 대기
+          await Future.delayed(Duration(seconds: retryCount * 2));
+        } else {
+          // 타임아웃이 아닌 다른 오류는 바로 throw
+          rethrow;
+        }
+      }
+    }
+    
+    throw Exception('Failed after $maxRetries retries');
+  }
+
+  Future<List<PharmacyModel>> _getPharmacyListInternal({
+    required int pageNo,
+    required int numOfRows,
     String? sidoCd,
     String? sgguCd,
     String? emdongNm,
@@ -91,7 +141,15 @@ class PharmacyApiService {
         final items = document.findAllElements('item');
         print('Found ${items.length} pharmacies');
         
-        return items.map((item) => PharmacyModel.fromXml(item)).toList();
+        final pharmacies = <PharmacyModel>[];
+        for (final item in items) {
+          final pharmacy = PharmacyModel.fromXml(item);
+          // Supabase에 약국 정보 저장 또는 업데이트
+          final savedPharmacy = await _saveOrUpdatePharmacyInSupabase(pharmacy);
+          pharmacies.add(savedPharmacy);
+        }
+        
+        return pharmacies;
       } else {
         throw Exception('Failed to load pharmacies: ${response.statusCode}');
       }
@@ -103,6 +161,45 @@ class PharmacyApiService {
         print('DioException response: ${e.response?.data}');
       }
       rethrow;
+    }
+  }
+
+  Future<PharmacyModel> _saveOrUpdatePharmacyInSupabase(PharmacyModel pharmacy) async {
+    try {
+      // ykiho로 기존 약국 검색
+      final existingPharmacy = await _supabase
+          .from('pharmacies')
+          .select()
+          .eq('ykiho', pharmacy.ykiho ?? '')
+          .maybeSingle();
+
+      if (existingPharmacy != null) {
+        // 기존 약국이 있으면 UUID 사용
+        return pharmacy.copyWith(id: existingPharmacy['id'] as String);
+      } else {
+        // 새 약국 정보 저장
+        final newPharmacy = await _supabase
+            .from('pharmacies')
+            .insert({
+              'ykiho': pharmacy.ykiho,
+              'name': pharmacy.name,
+              'address': pharmacy.address,
+              'phone': pharmacy.phone,
+              'latitude': pharmacy.latitude,
+              'longitude': pharmacy.longitude,
+              'operating_hours': {},
+              'is_night_pharmacy': false,
+              'is_holiday_open': false,
+            })
+            .select()
+            .single();
+
+        return pharmacy.copyWith(id: newPharmacy['id'] as String);
+      }
+    } catch (e) {
+      // 오류 발생 시 원본 반환
+      print('Supabase 저장 오류: $e');
+      return pharmacy;
     }
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../providers/auth_provider.dart';
 
@@ -29,8 +28,6 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
             children: [
               const SizedBox(height: 16),
               _buildProfileSection(),
-              const SizedBox(height: 16),
-              _buildPointSection(),
               const SizedBox(height: 16),
               _buildMenuSection(),
               const SizedBox(height: 16),
@@ -123,138 +120,139 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
     );
   }
 
-  Widget _buildPointSection() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '내 포인트',
-                    style: AppTextStyles.body1.copyWith(
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '1,250',
-                        style: AppTextStyles.heading1.copyWith(
-                          color: Colors.white,
-                          fontSize: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(
-                          'P',
-                          style: AppTextStyles.headline5.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Lv. 3',
-                      style: AppTextStyles.subtitle1.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            height: 6,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: 0.6,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '다음 레벨까지 250P',
-                style: AppTextStyles.caption.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-              Text(
-                '1,250 / 1,500',
-                style: AppTextStyles.caption.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // 포인트 섹션 - Phase 2에서 구현 예정
+  // Widget _buildPointSection() {
+  //   return Container(
+  //     width: double.infinity,
+  //     margin: const EdgeInsets.symmetric(horizontal: 16),
+  //     padding: const EdgeInsets.all(20),
+  //     decoration: BoxDecoration(
+  //       gradient: LinearGradient(
+  //         colors: [
+  //           AppColors.primary,
+  //           AppColors.primary.withOpacity(0.8),
+  //         ],
+  //         begin: Alignment.topLeft,
+  //         end: Alignment.bottomRight,
+  //       ),
+  //       borderRadius: BorderRadius.circular(12),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: AppColors.primary.withOpacity(0.3),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //           children: [
+  //             Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(
+  //                   '내 포인트',
+  //                   style: AppTextStyles.body1.copyWith(
+  //                     color: Colors.white.withOpacity(0.9),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 4),
+  //                 Row(
+  //                   crossAxisAlignment: CrossAxisAlignment.end,
+  //                   children: [
+  //                     Text(
+  //                       '1,250',
+  //                       style: AppTextStyles.heading1.copyWith(
+  //                         color: Colors.white,
+  //                         fontSize: 28,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 4),
+  //                     Padding(
+  //                       padding: const EdgeInsets.only(bottom: 2),
+  //                       child: Text(
+  //                         'P',
+  //                         style: AppTextStyles.headline5.copyWith(
+  //                           color: Colors.white,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 16,
+  //                 vertical: 8,
+  //               ),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white.withOpacity(0.2),
+  //                 borderRadius: BorderRadius.circular(20),
+  //               ),
+  //               child: Row(
+  //                 children: [
+  //                   const Icon(
+  //                     Icons.star,
+  //                     color: Colors.amber,
+  //                     size: 20,
+  //                   ),
+  //                   const SizedBox(width: 4),
+  //                   Text(
+  //                     'Lv. 3',
+  //                     style: AppTextStyles.subtitle1.copyWith(
+  //                       color: Colors.white,
+  //                       fontWeight: FontWeight.bold,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 16),
+  //         Container(
+  //           width: double.infinity,
+  //           height: 6,
+  //           decoration: BoxDecoration(
+  //             color: Colors.white.withOpacity(0.3),
+  //             borderRadius: BorderRadius.circular(3),
+  //           ),
+  //           child: FractionallySizedBox(
+  //             alignment: Alignment.centerLeft,
+  //             widthFactor: 0.6,
+  //             child: Container(
+  //               decoration: BoxDecoration(
+  //                 color: Colors.white,
+  //                 borderRadius: BorderRadius.circular(3),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //           children: [
+  //             Text(
+  //               '다음 레벨까지 250P',
+  //               style: AppTextStyles.caption.copyWith(
+  //                 color: Colors.white.withOpacity(0.9),
+  //               ),
+  //             ),
+  //             Text(
+  //               '1,250 / 1,500',
+  //               style: AppTextStyles.caption.copyWith(
+  //                 color: Colors.white.withOpacity(0.9),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildMenuSection() {
     return Container(
@@ -273,41 +271,11 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
       child: Column(
         children: [
           _buildMenuItem(
-            icon: Icons.medical_information,
-            title: '진료 기록',
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildMenuItem(
             icon: Icons.favorite,
             title: '즐겨찾기',
             onTap: () {
               context.push('/mypage/favorites');
             },
-          ),
-          _buildDivider(),
-          _buildMenuItem(
-            icon: Icons.history,
-            title: '포인트 내역',
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildMenuItem(
-            icon: Icons.notifications,
-            title: '알림 설정',
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildMenuItem(
-            icon: Icons.help_outline,
-            title: '고객센터',
-            onTap: () {},
-          ),
-          _buildDivider(),
-          _buildMenuItem(
-            icon: Icons.info_outline,
-            title: '앱 정보',
-            onTap: () {},
           ),
           _buildDivider(),
           _buildMenuItem(
@@ -417,7 +385,7 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
                 context: context,
                 barrierDismissible: false,
                 builder: (context) => const Center(
-                  child: CircularProgressIndicator(
+                  child: const CircularProgressIndicator(
                     color: AppColors.primary,
                   ),
                 ),
@@ -483,7 +451,7 @@ class _MyPageScreenState extends ConsumerState<MyPageScreen> {
                       SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(
+                        child: const CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Colors.white,
                         ),

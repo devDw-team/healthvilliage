@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -22,7 +24,37 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>http</string>
+		<string>https</string>
+		<string>kakaomap</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>프로필 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>주변 병원, 약국, 응급실을 찾고 안내하기 위해 위치 정보가 필요합니다. 백그라운드에서도 응급 상황 시 빠른 대응을 위해 위치 정보를 사용할 수 있습니다.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>백그라운드에서도 위치 기반 서비스를 제공하기 위해 필요합니다.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>주변 병원 및 약국을 찾기 위해 현재 위치가 필요합니다.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>촬영한 사진을 저장하기 위해 권한이 필요합니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>프로필 사진을 선택하기 위해 사진 접근 권한이 필요합니다.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -41,37 +73,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<key>io.flutter.embedded_views_preview</key>
 	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>LSApplicationQueriesSchemes</key>
-    <array>
-       <string>tel</string>
-       <string>http</string>
-       <string>https</string>
-       <string>kakaomap</string>
-    </array>
-    
-    <!-- WebView 사용 설정 -->
-    <key>io.flutter.embedded_views_preview</key>
-    <true/>
-    
-    <!-- HTTP 통신 허용 (카카오맵 API) -->
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-        <key>NSAllowsArbitraryLoadsInWebContent</key>
-        <true/>
-    </dict>
-    
-    <!-- 위치 권한 설명 -->
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>주변 병원 및 약국을 찾기 위해 현재 위치가 필요합니다.</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>백그라운드에서도 위치 기반 서비스를 제공하기 위해 필요합니다.</string>
 </dict>
 </plist>

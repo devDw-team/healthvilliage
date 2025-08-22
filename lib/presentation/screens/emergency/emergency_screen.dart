@@ -11,10 +11,17 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../data/models/emergency_room_model.dart';
 import '../../providers/emergency_provider.dart';
+import '../../providers/favorite_hospitals_provider.dart';
+import '../../providers/auth_provider.dart';
 
 /// 응급실 검색 화면
 class EmergencyScreen extends ConsumerStatefulWidget {
-  const EmergencyScreen({Key? key}) : super(key: key);
+  final bool isTabView;
+  
+  const EmergencyScreen({
+    Key? key,
+    this.isTabView = false,
+  }) : super(key: key);
 
   @override
   ConsumerState<EmergencyScreen> createState() => _EmergencyScreenState();
@@ -50,7 +57,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: widget.isTabView ? null : AppBar(
         title: const Text('응급실 찾기'),
         centerTitle: true,
         elevation: 0,
@@ -733,38 +740,88 @@ class _EmergencyRoomDetailSheet extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    // 지도 보기 버튼 (detailProvider 로딩 상태에 상관없이 표시)
+                    // 지도 보기 및 즐겨찾기 버튼
                     Consumer(
                       builder: (context, ref, child) {
                         final detailAsync = ref.watch(emergencyRoomDetailProvider(room.hpid));
                         final detailRoom = detailAsync.valueOrNull;
                         final lat = detailRoom?.latitude ?? room.latitude;
                         final lon = detailRoom?.longitude ?? room.longitude;
+                        final user = ref.watch(currentUserProvider);
                         
-                        return FilledButton.icon(
-                          onPressed: (lat != null && lon != null) ? () {
-                            // 지도 화면으로 이동
-                            context.push(
-                              '/map',
-                              extra: {
-                                'initialMarker': HospitalMarker(
-                                  id: room.hpid,
-                                  name: room.dutyName,
-                                  latitude: double.parse(lat),
-                                  longitude: double.parse(lon),
-                                  address: detailRoom?.dutyAddr ?? room.dutyAddr ?? '',
-                                  phoneNumber: detailRoom?.dutyTel3 ?? room.dutyTel3 ?? '',
-                                  type: 'hospital',
-                                ),
-                                'markerType': 'hospital',
-                              },
-                            );
-                          } : null,
-                          icon: const Icon(Icons.map, size: 18),
-                          label: const Text('지도'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                          ),
+                        return Row(
+                          children: [
+                            // 지도 보기 버튼
+                            FilledButton.icon(
+                              onPressed: (lat != null && lon != null) ? () {
+                                // 지도 화면으로 이동
+                                context.push(
+                                  '/map',
+                                  extra: {
+                                    'initialMarker': HospitalMarker(
+                                      id: room.hpid,
+                                      name: room.dutyName,
+                                      latitude: double.parse(lat),
+                                      longitude: double.parse(lon),
+                                      address: detailRoom?.dutyAddr ?? room.dutyAddr ?? '',
+                                      phoneNumber: detailRoom?.dutyTel3 ?? room.dutyTel3 ?? '',
+                                      type: 'hospital',
+                                    ),
+                                    'markerType': 'hospital',
+                                  },
+                                );
+                              } : null,
+                              icon: const Icon(Icons.map, size: 18),
+                              label: const Text('지도'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                              ),
+                            ),
+                            if (user != null) ...[
+                              const SizedBox(width: 8),
+                              // 즐겨찾기 버튼
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final isFavoriteAsync = ref.watch(isHospitalFavoriteProvider(room.hpid));
+                                  
+                                  return isFavoriteAsync.when(
+                                    data: (isFavorite) => IconButton(
+                                      icon: Icon(
+                                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                                        color: isFavorite ? Colors.red : AppColors.textSecondary,
+                                        size: 28,
+                                      ),
+                                      onPressed: () async {
+                                        await ref.read(favoriteHospitalsProvider.notifier).toggleFavorite(room.hpid);
+                                        
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              isFavorite 
+                                                ? '즐겨찾기에서 제거되었습니다'
+                                                : '즐겨찾기에 추가되었습니다',
+                                            ),
+                                            duration: const Duration(seconds: 2),
+                                            backgroundColor: isFavorite ? AppColors.textSecondary : AppColors.primary,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    loading: () => const SizedBox(
+                                      width: 28,
+                                      height: 28,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                    error: (_, __) => const Icon(
+                                      Icons.favorite_border,
+                                      size: 28,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
                         );
                       },
                     ),

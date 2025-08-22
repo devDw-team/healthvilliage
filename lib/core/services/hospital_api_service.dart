@@ -1,18 +1,20 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:xml/xml.dart' as xml;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/hospital_model.dart';
 
 class HospitalApiService {
   static const String baseUrl = 'http://apis.data.go.kr/B551182/hospInfoServicev2';
   final Dio _dio;
   final String? _apiKey;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   HospitalApiService() 
     : _dio = Dio(BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 30),  // 30초로 증가
+        receiveTimeout: const Duration(seconds: 30),  // 30초로 증가
       )),
       _apiKey = dotenv.env['HIRA_API_KEY'] {
     _dio.interceptors.add(LogInterceptor(
@@ -23,7 +25,7 @@ class HospitalApiService {
     ));
   }
 
-  /// 병원 목록 조회
+  /// 병원 목록 조회 (재시도 로직 포함)
   Future<List<HospitalModel>> getHospitalList({
     int pageNo = 1,
     int numOfRows = 10,
@@ -32,6 +34,56 @@ class HospitalApiService {
     String? emdongNm,
     String? yadmNm,
     String? clCd, // 종별코드
+    double? xPos,
+    double? yPos,
+    int? radius,
+  }) async {
+    // 최대 3번 재시도
+    int maxRetries = 3;
+    int retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        return await _getHospitalListInternal(
+          pageNo: pageNo,
+          numOfRows: numOfRows,
+          sidoCd: sidoCd,
+          sgguCd: sgguCd,
+          emdongNm: emdongNm,
+          yadmNm: yadmNm,
+          clCd: clCd,
+          xPos: xPos,
+          yPos: yPos,
+          radius: radius,
+        );
+      } catch (e) {
+        if (e is DioException && e.type == DioExceptionType.receiveTimeout) {
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            print('Max retries reached. Throwing exception.');
+            rethrow;
+          }
+          print('Timeout occurred. Retrying... (Attempt ${retryCount + 1}/$maxRetries)');
+          // 재시도 전 짧은 대기
+          await Future.delayed(Duration(seconds: retryCount * 2));
+        } else {
+          // 타임아웃이 아닌 다른 오류는 바로 throw
+          rethrow;
+        }
+      }
+    }
+    
+    throw Exception('Failed after $maxRetries retries');
+  }
+
+  Future<List<HospitalModel>> _getHospitalListInternal({
+    required int pageNo,
+    required int numOfRows,
+    String? sidoCd,
+    String? sgguCd,
+    String? emdongNm,
+    String? yadmNm,
+    String? clCd,
     double? xPos,
     double? yPos,
     int? radius,
@@ -93,7 +145,15 @@ class HospitalApiService {
         final items = document.findAllElements('item');
         print('Found ${items.length} hospitals');
         
-        return items.map((item) => HospitalModel.fromXml(item)).toList();
+        final hospitals = <HospitalModel>[];
+        for (final item in items) {
+          final hospital = HospitalModel.fromXml(item);
+          // Supabase에 병원 정보 저장 또는 업데이트
+          final savedHospital = await _saveOrUpdateHospitalInSupabase(hospital);
+          hospitals.add(savedHospital);
+        }
+        
+        return hospitals;
       } else {
         throw Exception('Failed to load hospitals: ${response.statusCode}');
       }
@@ -150,6 +210,46 @@ class HospitalApiService {
     } catch (e) {
       print('Error in getTotalCount: $e');
       rethrow;
+    }
+  }
+
+  Future<HospitalModel> _saveOrUpdateHospitalInSupabase(HospitalModel hospital) async {
+    try {
+      // ykiho로 기존 병원 검색
+      final existingHospital = await _supabase
+          .from('hospitals')
+          .select()
+          .eq('ykiho', hospital.ykiho ?? '')
+          .maybeSingle();
+
+      if (existingHospital != null) {
+        // 기존 병원이 있으면 UUID 사용
+        return hospital.copyWith(id: existingHospital['id'] as String);
+      } else {
+        // 새 병원 정보 저장
+        final newHospital = await _supabase
+            .from('hospitals')
+            .insert({
+              'ykiho': hospital.ykiho,
+              'name': hospital.name,
+              'address': hospital.address,
+              'phone': hospital.phone,
+              'latitude': hospital.latitude,
+              'longitude': hospital.longitude,
+              'category': hospital.category,
+              'operating_hours': {},
+              'is_emergency_available': false,
+              'is_parking_available': false,
+            })
+            .select()
+            .single();
+
+        return hospital.copyWith(id: newHospital['id'] as String);
+      }
+    } catch (e) {
+      // 오류 발생 시 원본 반환
+      print('Supabase 저장 오류: $e');
+      return hospital;
     }
   }
 } 

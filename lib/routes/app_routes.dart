@@ -13,11 +13,13 @@ import '../presentation/screens/medicine/medicine_screen.dart';
 import '../presentation/screens/medicine/medicine_detail_screen.dart';
 import '../presentation/screens/mypage/mypage_screen.dart';
 import '../domain/entities/medicine_entity.dart';
+import '../data/models/medicine.dart';
 import '../presentation/screens/pharmacy/pharmacy_search_screen.dart';
 import '../presentation/screens/prescription/prescription_screen.dart';
 import '../presentation/screens/profile/profile_edit_screen.dart';
 import '../presentation/screens/roulette/roulette_screen.dart';
 import '../presentation/screens/splash/splash_screen.dart';
+import '../presentation/screens/search/search_screen.dart';
 import '../presentation/screens/map/map_screen.dart';
 import '../presentation/screens/password_change/current_password_screen.dart';
 import '../presentation/screens/password_change/new_password_screen.dart';
@@ -109,6 +111,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/search',
+        builder: (context, state) {
+          final tabIndex = state.uri.queryParameters['tab'];
+          return SearchScreen(
+            initialTab: tabIndex != null ? int.tryParse(tabIndex) ?? 0 : 0,
+          );
+        },
+      ),
+      GoRoute(
         path: '/hospital',
         builder: (context, state) => const HospitalSearchScreen(),
       ),
@@ -119,8 +130,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'detail',
             builder: (context, state) {
-              final medicine = state.extra as MedicineEntity;
-              return MedicineDetailScreen(medicine: medicine);
+              // Medicine 모델과 MedicineEntity 모두 지원
+              final extra = state.extra;
+              if (extra is Medicine) {
+                // Medicine 모델의 toEntity() 메서드 사용
+                final medicine = extra.toEntity();
+                return MedicineDetailScreen(medicine: medicine);
+              } else {
+                // 이미 MedicineEntity인 경우
+                final medicine = extra as MedicineEntity;
+                return MedicineDetailScreen(medicine: medicine);
+              }
             },
           ),
         ],
@@ -158,12 +178,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/map',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return MapScreen(
-            initialMarker: extra?['initialMarker'] as HospitalMarker?,
-            markerType: extra?['markerType'] as String?,
-          );
+          if (state.extra != null && state.extra is Map<String, dynamic>) {
+            final extra = state.extra as Map<String, dynamic>;
+            return MapScreen(
+              initialMarker: extra['initialMarker'] as HospitalMarker?,
+              markerType: extra['markerType'] as String?,
+              isNearbyMode: extra['isNearbyMode'] as bool? ?? false,
+            );
+          }
+          return const MapScreen();
         },
+        routes: [
+          GoRoute(
+            path: 'nearby',
+            builder: (context, state) => const MapScreen(
+              isNearbyMode: true,
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/profile/edit',

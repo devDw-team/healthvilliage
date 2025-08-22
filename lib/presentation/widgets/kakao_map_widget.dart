@@ -231,15 +231,56 @@ class KakaoMapWidgetState extends State<KakaoMapWidget> {
                 console.log('마커 추가:', id, title, type);
                 var markerPosition = new kakao.maps.LatLng(lat, lng);
                 
-                var imageSrc = type === 'current' 
-                    ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/current_location.png'
-                    : type === 'hospital'
-                    ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
-                    : 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png';
+                // Material Icons 스타일의 SVG 마커 생성
+                var imageSrc;
+                var imageSize;
                 
-                var imageSize = type === 'current' 
-                    ? new kakao.maps.Size(40, 40)
-                    : new kakao.maps.Size(30, 44);
+                if (type === 'current') {
+                    // 현재 위치 - 파란색 점
+                    imageSrc = 'data:image/svg+xml;base64,' + btoa(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="8" fill="#2196F3" stroke="white" stroke-width="3"/>
+                            <circle cx="20" cy="20" r="18" fill="none" stroke="#2196F3" stroke-width="2" opacity="0.3"/>
+                        </svg>
+                    `);
+                    imageSize = new kakao.maps.Size(40, 40);
+                } else if (type === 'hospital') {
+                    // 병원 - 녹색 병원 아이콘
+                    imageSrc = 'data:image/svg+xml;base64,' + btoa(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+                            <rect x="3" y="3" width="30" height="30" rx="6" fill="#4CAF50" stroke="white" stroke-width="2"/>
+                            <path d="M14 10 h8 v16 h-8 z M10 14 h16 v8 h-16 z" fill="white"/>
+                        </svg>
+                    `);
+                    imageSize = new kakao.maps.Size(36, 36);
+                } else if (type === 'pharmacy') {
+                    // 약국 - 파란색 약국 아이콘
+                    imageSrc = 'data:image/svg+xml;base64,' + btoa(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+                            <rect x="3" y="3" width="30" height="30" rx="6" fill="#2196F3" stroke="white" stroke-width="2"/>
+                            <path d="M14 10 h8 v16 h-8 z M10 14 h16 v8 h-16 z" fill="white"/>
+                        </svg>
+                    `);
+                    imageSize = new kakao.maps.Size(36, 36);
+                } else if (type === 'emergency') {
+                    // 응급실 - 빨간색 응급 아이콘
+                    imageSrc = 'data:image/svg+xml;base64,' + btoa(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+                            <rect x="3" y="3" width="30" height="30" rx="6" fill="#F44336" stroke="white" stroke-width="2"/>
+                            <path d="M14 10 h8 v16 h-8 z M10 14 h16 v8 h-16 z" fill="white"/>
+                        </svg>
+                    `);
+                    imageSize = new kakao.maps.Size(36, 36);
+                } else {
+                    // 기본 마커
+                    imageSrc = 'data:image/svg+xml;base64,' + btoa(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+                            <rect x="3" y="3" width="30" height="30" rx="6" fill="#9E9E9E" stroke="white" stroke-width="2"/>
+                            <circle cx="18" cy="18" r="6" fill="white"/>
+                        </svg>
+                    `);
+                    imageSize = new kakao.maps.Size(36, 36);
+                }
                 
                 var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
                 

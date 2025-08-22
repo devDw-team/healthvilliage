@@ -7,6 +7,7 @@ class AppStrings {
   
   // 네비게이션
   static const String home = '홈';
+  static const String search = '검색';
   static const String medicine = '의약품';
   static const String roulette = '룰렛';
   static const String calendar = '캘린더';
@@ -14,7 +15,6 @@ class AppStrings {
   static const String prescription = '처방전';
   
   // 검색 관련
-  static const String search = '검색';
   static const String searchHint = '병원이나 약국을 검색해보세요';
   static const String searchResult = '검색 결과';
   static const String noSearchResult = '검색 결과가 없습니다';
